@@ -1,0 +1,211 @@
+using LinearAlgebra
+
+## choice of basis for the 3-sunlet model
+m1 = Dict([4=>[1,2], 5=>[1]])
+m2 = Dict([4=>[2], 6=>[1]])
+M = [m1, m2]
+
+"""
+stuff here
+"""
+function computeLambda(G, m, l, n)
+    func = []
+    
+    for i in collect(keys(m))
+        lower_index = i
+        upper_index = (sum([G[j] for j in m[i]]) % n)
+        push!(func, (lower_index, upper_index))
+    end
+    
+    return sum([l[I] for I in func])
+end
+
+"""
+stuff here
+"""
+function getWinner(G, l, n)
+    s1 = computeLambda(G, m1, l, n)
+    s2 = computeLambda(G, m2, l, n)
+    
+    if s1 <= s2
+        return 1
+    else
+        return 2
+    end
+end
+
+"""
+stuff here!
+"""
+function getVector(g, m, n)
+    vector = Array{Int64}(undef, n*5, 1)
+    
+    g1, g2, g3 = g
+    
+    a2 = [0 for i=1:n]
+    if g2 == n
+        a2[1] = 1
+    else
+        a2[g2 + 1] = 1
+    end
+    vector[1:n,:] = a2
+    
+    a3 = [0 for i=1:n]
+    if g3 == n
+        a3[1] = 1
+    else
+        a3[g3 + 1] = 1
+    end
+    vector[n+1:2*n,:] = a3
+    
+    for i=4:6
+        entry = [0 for k=1:n]
+        if i in keys(m)
+            e = (sum([g[j] for j in m[i]]) % n) + 1
+            entry[e] = 1
+        end
+        vector[(i-2)*n+1:(i-1)*n,:] = entry
+    end
+    
+    return collect(vector)
+end
+
+"""
+stuff here!
+"""
+function getMatrix(l, n)
+    ## list of triples of group elements
+    G = [t for t in collect(Iterators.product(1:n,1:n,1:n)) if (sum(t) % n) == 0]
+    
+    A = Matrix{Int64}(undef, n*5, length(G))
+    
+    ## for each group element, compute the winner and then the corresponding vector
+    for i=1:length(G)
+        g = G[i]
+        
+        ## computing the winner
+        winner = getWinner(g, l, n)
+        
+        ## getting the corresponding vector
+        A[:,i] = getVector(g, M[winner], n)
+    end
+    
+    return A
+end
+
+"""
+stuff here!
+"""
+function genData(n, N)
+    # for now just recording the rank
+    data = []
+    for i=1:N
+        l = rlam(n)
+        A = getMatrix(l, n)
+        r = LinearAlgebra.rank(A)
+        push!(data, r)
+    end
+    
+    return data
+end
+
+## function to generate the indices for Z/nZ
+indices(n) = vec([(i,j) for j=0:(n-1), i=4:6])
+
+## helper function for sample(n)
+function sample_ranges(n)
+    ranges = [0:0]
+    for i=1:(n-1)
+        push!(ranges, 0:2)
+    end
+
+    for i=1:n
+        push!(ranges, 0:0)
+    end
+
+    for i=1:n
+        push!(ranges, -1:1)
+    end
+    
+    return ranges
+end
+
+## function to generate the test ranges for lambda
+function sample(n)
+    sample_0 = collect(Iterators.flatten(Iterators.product(sample_ranges(n)...)))
+    
+    sample = [sample_0[3*n*k+1:3*n*k+3*n] for k=0:-1+Int(trunc(length(sample_0)/(3*n)))]
+    
+    return sample
+end
+
+"""
+stuff here!
+"""
+function get_data(sample, indices, n)
+    data = []
+    for s in sample
+        L = Dict([indices[i]=>s[i] for i=1:3*n])
+        B = getMatrix(L, n)
+        r = LinearAlgebra.rank(B)
+        ## maybe add more to data here?
+        push!(data, r)
+    end
+    return data
+end
+
+## compute some statistics of the ranks produced
+mma(D) = print(minimum(D), ' ', sum(D)/length(D), ' ', maximum(D));
+
+"""
+    ToDo: stuff here
+"""
+function extended_data(sample, indices, n)
+    data = []
+    for s in sample
+        L = Dict([indices[i]=>s[i] for i=1:3*n])
+        B = getMatrix(L, n)
+        r = LinearAlgebra.rank(B)
+        push!(data, (L, r))
+    end
+    return data
+end
+
+## get the lambda achieving the maximum rank
+"""
+    ToDo: stuff here
+"""
+function get_maxes(data, n)
+    maxes = []
+    for d in data
+        if d[3] == 1 + 5*(n-1)
+            ## we can just get the matrix again if we want to, so don't record it for now
+            push!(maxes, d[1])
+        end
+    end
+    return maxes
+end
+
+"""
+    ToDo: stuff here
+"""
+function get_ineq(lambda, n)
+    ineq = []
+    push!(ineq, ("mu_0 > 0", mu(lambda, 0) > 0))
+    for i=1:(n-1)
+        for j=1:n-1
+            push!(ineq, ("mu_$(i) > eta_$(j)", mu(lambda, i) > eta(lambda, j)))
+        end
+    end
+    return ineq
+end
+
+if abspath(PROGRAM_FILE) == @__FILE__
+    n = 3
+
+    indices = indices(n)
+    sample = sample(n)
+
+    D = extended_data(sample, indices, n) ## get (lambda, rank) pairs
+    ranks = list(Set([d[2] for d in D])) ## get all possible ranks
+end
