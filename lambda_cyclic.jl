@@ -1,4 +1,4 @@
-using LinearAlgebra
+using LinearAlgebra, Combinatorics
 
 ## choice of basis for the 3-sunlet model
 m1 = Dict([4=>[1,2], 5=>[1]])
@@ -200,12 +200,99 @@ function get_ineq(lambda, n)
     return ineq
 end
 
+"""
+    ToDo: stuff here
+"""
+function get_gaps(L)
+    V = sort(L)
+    G = [V[1] - 0.5]
+    for i = 1 : (length(V) - 1)
+        push!(G, (V[i] + V[i+1])/2)
+    end
+    push!(G, V[length(V)] + 0.5)
+    return G
+end
+
+"""
+    ToDo: stuff here
+"""
+function better_sampling(n)
+    mus = [] ## store lists of mu_0, mu_1, mu_2, ..., mu_n-1
+    ## pick a permutation of the mu_i, assign to 1, ..., n
+    for p in collect(Combinatorics.permutations(1:n))
+        mu_0 = 2*p[1]
+
+        ## then compute two shifts: mu_0 = -1, = 1
+        mu_neg = [2*p[i] - mu_0 - 1 for i=1:n]
+        mu_pos = [2*p[i] - mu_0 + 1 for i=1:n]
+        
+        push!(mus, mu_neg), push!(mus, mu_pos)
+    end
+
+    ## mu needs to be paired with eta
+
+    ## now compute some lambda to sample
+    test_lam = []
+    for mu in mus
+        etas = [] ## list to store eta_0, ..., eta_n-1
+        gaps = get_gaps(mu)
+
+        eta = [1 for i=1:n]
+        push!(etas, [gaps[e] for e in eta])
+        while minimum(eta) < n + 1
+            ## I need to find the smallest index not maxed out --> j
+            j = -1
+            for i=1:n
+                if eta[i] < n + 1
+                    j = i
+                    break
+                end
+            end
+            
+            ## then reset everything from 1 --> j-1
+            for i=1:(j-1)
+                eta[i] = 1
+            end
+
+            ## and increment the jth index
+            eta[j] = eta[j] + 1
+
+            ## then add that eta to the list
+            push!(etas, [gaps[e] for e in eta])
+        end
+
+        for eta in etas
+            lambda = Dict()
+
+            for i=0:(n-1)
+                lambda[(6,i)] = mu[i+1] ## set lambda_6^k = mu_k
+                lambda[(5,i)] = 0 ## set all lambda_5 = 0
+            end
+
+            lambda[(4,0)] = 0 ## set lambda_4^0 = 0
+            for i=1:(n-1)
+                lambda[(4,i)] = sum(eta[1:i]) ## set lambda_4^k = sum of first k etas
+            end
+
+            push!(test_lam, lambda)
+        end
+    end
+    return test_lam
+end
+
 if abspath(PROGRAM_FILE) == @__FILE__
+    # n = 3
+
+    # indices = indices(n)
+    # sample = sample(n)
+
+    # D = extended_data(sample, indices, n) ## get (lambda, rank) pairs
+    # ranks = list(Set([d[2] for d in D])) ## get all possible ranks
+
     n = 3
 
-    indices = indices(n)
-    sample = sample(n)
-
-    D = extended_data(sample, indices, n) ## get (lambda, rank) pairs
-    ranks = list(Set([d[2] for d in D])) ## get all possible ranks
+    sample = better_sampling(n)
+    D = [(L, LinearAlgebra.rank(getMatrix(L, n))) for L in sample]
+    ranks = Set([d[2] for d in D])
+    print(ranks)
 end
