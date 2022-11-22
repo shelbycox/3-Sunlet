@@ -5,16 +5,34 @@ p(n) = [rand(Float64)-.5 for j=1:n] ## get a random point
 """
 Returns a list of hyperplanes in the arrangement.
 """
-function getH(k)
-    v = zero(rand(2*k))
-    v[1] = 1
-    H = [v]
-    for i=1:k
-        for j=1:k
+function getH(k, full=true)
+    H = []
+    if full
+        for i=1:(2*k)
             v = zero(rand(2*k))
             v[i] = 1
-            v[k + j] = -1
             push!(H, v)
+        end
+        
+        for i=1:(2*k)
+            for j=(i+1):(2*k)
+                v = zero(rand(2*k))
+                v[i] = 1
+                v[j] = -1
+                push!(H, v)
+            end
+        end
+    else
+        v = zero(rand(2*k))
+        v[1] = 1
+        push!(H, v)
+        for i=1:k
+            for j=1:k
+                v = zero(rand(2*k))
+                v[i] = 1
+                v[k + j] = -1
+                push!(H, v)
+            end
         end
     end
     return H
@@ -53,7 +71,17 @@ function getOrbit(v, H)
     return orbit
 end
 
-ineq(v, k) = [v[i] > v[j] for i=1:k, j=(k+1):(2*k)] ## matrix of inequalities
+"""
+Returns a matrix that records the Weyl chamber of v.
+"""
+function ineq(v, k, full=false)
+    if full
+        return [[v[i] > 0 for i=1:(2*k)] [v[i] > v[j] for i=1:(2*k), j=1:(2*k)]]
+    end
+    top_row = [1 < 0 for i=1:k]
+    top_row[1] = (v[1] > 0)
+    return [top_row [v[i] > v[j] for i=1:k, j=(k+1):(2*k)]]
+end
 
 """
 Project the vector v onto the hyperplane with normal vector a.
@@ -89,13 +117,13 @@ end
 """
 Checks if u, v are in neighboring Weyl chambers.
 """
-function isNeighbor(u, v, k)
-    return sum(ineq(u, k) .⊻ ineq(v, k)) == 1
+function neighbors(orbit, v, k, full=false)
+    return [u for u in orbit if isNeighbor(u, v, k, full)]
 end
 
 """
 Returns a list of all the neighbors of v in orbit.
 """
-function neighbors(orbit, v, k)
-    return [u for u in orbit if isNeighbor(u, v, k)]
+function isNeighbor(u, v, k, full=false)
+    return sum(ineq(u, k, full) .⊻ ineq(v, k, full)) == 1
 end
