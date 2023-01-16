@@ -131,7 +131,7 @@ function sample_ranges(n)
 end
 
 ## function to generate the test ranges for lambda
-function sample(n)
+function old_sample(n)
     sample_0 = collect(Iterators.flatten(Iterators.product(sample_ranges(n)...)))
     
     sample = [sample_0[3*n*k+1:3*n*k+3*n] for k=0:-1+Int(trunc(length(sample_0)/(3*n)))]
@@ -280,19 +280,21 @@ function better_sampling(n)
     return test_lam
 end
 
-if abspath(PROGRAM_FILE) == @__FILE__
-    # n = 3
+function to_lambda(mu, eta, n)
+    lambda = Dict()
+    for i=0:(n-1)
+        lambda[(6,i)] = maximum([mu[i+1], 0]) ## set lambda_6^k = mu_k if mu_k > 0
+        lambda[(5,i)] = minimum([mu[i+1], 0])*(-1) ## set lambda_5^k = -mu_k if mu_k < 0
+    end
 
-    # indices = indices(n)
-    # sample = sample(n)
+    lambda[(4,0)] = 0 ## set lambda_4^0 = 0
+    for i=1:(n-1)
+        lambda[(4,i)] = sum(eta[1:i]) ## set lambda_4^k = sum of first k etas
+    end
+    return lambda
+end
 
-    # D = extended_data(sample, indices, n) ## get (lambda, rank) pairs
-    # ranks = list(Set([d[2] for d in D])) ## get all possible ranks
-
-    n = 3
-
-    sample = better_sampling(n)
-    D = [(L, LinearAlgebra.rank(getMatrix(L, n))) for L in sample]
-    ranks = Set([d[2] for d in D])
-    print(ranks)
+function getRank(mu_eta, n)
+    L = to_lambda(mu_eta[1:n], mu_eta[(n+1):end], n)
+    return LinearAlgebra.rank(getMatrix(L, n))
 end

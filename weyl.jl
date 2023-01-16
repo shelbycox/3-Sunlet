@@ -1,6 +1,6 @@
 using LinearAlgebra
 
-p(n) = [rand(Float64)-.5 for j=1:n] ## get a random point
+p(n) = [rand(Float64)-.5 for j=1:(2*n)] ## get a random point
 
 """
 Returns a list of hyperplanes in the arrangement.
@@ -39,26 +39,26 @@ function getH(k, full=true)
 end
 
 """
-Reflects a vector $v$ over the hyperplane with normal vector $a$
+Reflects a vector v over the hyperplane with normal vector a.
 """
 function reflect(v, a)
     return v .- a*2*(LinearAlgebra.dot(v,a))/LinearAlgebra.dot(a,a)
 end
 
 """
-Returns the orbit of v under the hyperplane arrangment H.
+Returns the orbit of v under the full hyperplane arrangment H.
 """
 function getOrbit(v, H)
     k = Int(length(v)/2)
     orbit = [v]
-    ineqs = [ineq(v, k)]
+    ineqs = [ineq(v, k, true)]
     to_check = [v]
     while length(to_check) > 0
         new_to_check = []
         for u in to_check
             for h in H
                 r = reflect(u, h)
-                I = ineq(r, k)
+                I = ineq(r, k, true)
                 if I ∉ ineqs
                     push!(orbit, r)
                     push!(new_to_check, r)
@@ -117,7 +117,7 @@ end
 """
 Checks if u, v are in neighboring Weyl chambers.
 """
-function neighbors(orbit, v, k, full=false)
+function getNeighbors(orbit, v, k, full=false)
     return [u for u in orbit if isNeighbor(u, v, k, full)]
 end
 
