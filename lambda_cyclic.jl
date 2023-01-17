@@ -22,7 +22,7 @@ function computeLambda(groupElementTriple, exponent, lambda, groupStructure)
     for i in collect(keys(exponent))
         lower_index = i
         upper_index = sum(groupElementTriple[exponent[i]]) .% groupStructure ## this is group addition
-        push!(varsToSum, (lower_index, upper_index[1]))
+        push!(varsToSum, (lower_index, upper_index))
     end
     
     return sum([lambda[I] for I in varsToSum])
@@ -310,16 +310,32 @@ function to_lambda(mu, eta, groupStructure) ## only works for cyclic groups curr
     groupSize = prod(groupStructure)
     groupElements = getGroupElements(groupStructure)
     ## this block should work for any group now
-    for i=eachIndex(groupElements)
-        lambda[(6,groupElements[i])] = maximum([mu[i], 0]) ## set lambda_6^k = mu_k if mu_k > 0
-        lambda[(5,groupElements[i])] = minimum([mu[i], 0])*(-1) ## set lambda_5^k = -mu_k if mu_k < 0
+    ## TODO: check that the mus are in the order you think they are wrt group element generation --> they are for Z2 x Z2!
+    for i=eachindex(groupElements)
+        lambda[(6,groupElements[i])] = maximum([mu[i], 0]) ## set lambda_6^k = mu_k if mu_k > 0, 0 otherwise
+        lambda[(5,groupElements[i])] = minimum([mu[i], 0])*(-1) ## set lambda_5^k = -mu_k if mu_k < 0, 0 otherwise
     end
 
     ## this will probably not work for every group...
-    lambda[(4,0)] = 0 ## set lambda_4^0 = 0
-    for i=1:(n-1)
-        lambda[(4,i)] = sum(eta[1:i]) ## set lambda_4^k = sum of first k etas
+    numFactors = length(groupStructure)
+    lambda[(4,zeros(numFactors))] = 0 ## set lambda_4^0 = 0
+    if numFactors == 1
+        for i=2:groupSize
+            lambda[(4,groupElements[i])] = sum(eta[1:i-1]) ## set lambda_4^k = sum of first k etas
+        end
+    else
+        ## need to build a chain of etas... slightly non-trivial because we don't know what order the eta elements are in...
+        ## TODO: fill this in for any group!
+        ## this will work for Z2 x Z2
+        count = 1
+        j = 1
+        while j <= groupSize
+            lambda[(4, groupElements[j])] = lambda[(4, groupElements[j - count])] + eta[(4, j)]
+            count = count + 1
+            j = j + count
+        end
     end
+    
     return lambda
 end
 
