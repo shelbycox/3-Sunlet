@@ -1,31 +1,39 @@
 using LinearAlgebra, Combinatorics
 
 ## choice of basis for the 3-sunlet model
-m1 = Dict([4=>[1,2], 5=>[1]])
-m2 = Dict([4=>[2], 6=>[1]])
-M = [m1, m2]
+##                      m_1                          m_2
+basisExponents = [Dict([4=>[1,2], 5=>[1]]), Dict([4=>[2], 6=>[1]])]
+
+"""
+I think I need either a group struct or a setup object.
+That way, I can store the group structure, number of factors, group elements, valid group triples, instead of needing to create them every time
+"""
 
 """
 stuff here
+groupElementTriple is a list of three group elements.
+exponent is the exponent vector (as a list).
+lambda is a vector in R^?.
+groupStructure is a list of integers that encodes the structure of the (finite) abelian group.
 """
-function computeLambda(G, m, l, n)
-    func = []
+function computeLambda(groupElementTriple, exponent, lambda, groupStructure)
+    varsToSum = [] ## better name for this!
     
-    for i in collect(keys(m))
+    for i in collect(keys(exponent))
         lower_index = i
-        upper_index = (sum([G[j] for j in m[i]]) % n)
-        push!(func, (lower_index, upper_index))
+        upper_index = sum(groupElementTriple[exponent[i]]) .% groupStructure ## this is group addition
+        push!(varsToSum, (lower_index, upper_index[1]))
     end
     
-    return sum([l[I] for I in func])
+    return sum([lambda[I] for I in varsToSum])
 end
 
 """
 stuff here
 """
-function getWinner(G, l, n)
-    s1 = computeLambda(G, m1, l, n)
-    s2 = computeLambda(G, m2, l, n)
+function getLowerLambdaExp(groupElementTriple, lambda, groupStructure)
+    s1 = computeLambda(groupElementTriple, basisExponents[1], lambda, groupStructure)
+    s2 = computeLambda(groupElementTriple, basisExponents[2], lambda, groupStructure)
     
     if s1 <= s2
         return 1
@@ -36,58 +44,72 @@ end
 
 """
 stuff here!
+## TODO: clean up this code and figure out what it's doing
 """
-function getVector(g, m, n)
-    vector = Array{Int64}(undef, n*5, 1)
+function getVector(g, basisExponent, groupStructure)
+    groupSize = prod(groupStructure)
+    numFactors = length(groupStructure)
+    vector = Array{Int64}(undef, groupSize*5, 1)
+    groupElements = getGroupElements(groupStructure)
     
     g1, g2, g3 = g
     
-    a2 = [0 for i=1:n]
-    if g2 == n
-        a2[1] = 1
-    else
-        a2[g2 + 1] = 1
-    end
-    vector[1:n,:] = a2
+    a2Exponent = [0 for i=1:groupSize] ## initialize a2 exponent indicator vector
+    a2Exponent[findfirst(x -> x == g2, groupElements)] = 1
+    vector[1:groupSize,:] = a2Exponent
     
-    a3 = [0 for i=1:n]
-    if g3 == n
-        a3[1] = 1
-    else
-        a3[g3 + 1] = 1
-    end
-    vector[n+1:2*n,:] = a3
+    a3Exponent = [0 for i=1:groupSize] ## initialize a3 exponent indicator vector
+    a3Exponent[findfirst(x -> x == g3, groupElements)] = 1
+    vector[groupSize+1:2*groupSize,:] = a3Exponent
     
     for i=4:6
-        entry = [0 for k=1:n]
-        if i in keys(m)
-            e = (sum([g[j] for j in m[i]]) % n) + 1
-            entry[e] = 1
+        entry = [0 for k=1:groupSize] ## initiale a4/5/6 exponent indicator vectors
+        if i in keys(basisExponent)
+            e = (sum([g[j] for j in basisExponent[i]]) .% groupStructure)
+            entry[findfirst(x -> x == e, groupElements)] = 1
         end
-        vector[(i-2)*n+1:(i-1)*n,:] = entry
+        vector[(i-2)*groupSize+1:(i-1)*groupSize,:] = entry
     end
     
     return collect(vector)
 end
 
 """
+Given the structure of a finite abelian group, returns a list of all elements (each element is encoded as a list).
+"""
+function getGroupElements(groupStructure)
+    groupElementForm = [0:j-1 for j in groupStructure]
+    return [collect(g) for g in collect(Iterators.product(groupElementForm...))]
+end
+
+"""
+Given the structure of a finite abelian group, returns a list of all triples of group elements that sum to zero.
+"""
+function getValidGroupTriples(groupStructure)
+    groupElements = getGroupElements(groupStructure)
+    groupElementTriples = [collect(G) for G in collect(Iterators.product(groupElements, groupElements, groupElements))]
+    sumZeroTriples = [G for G in groupElementTriples if sum(G) .% groupStructure == zeros(length(groupStructure))]
+    return sumZeroTriples
+end
+
+"""
 stuff here!
 """
-function getMatrix(l, n)
+function getMatrix(lambda, groupStructure)
     ## list of triples of group elements
-    G = [t for t in collect(Iterators.product(1:n,1:n,1:n)) if (sum(t) % n) == 0]
-    
-    A = Matrix{Int64}(undef, n*5, length(G))
+    groupElementTriples = getValidGroupTriples(groupStructure)
+    groupSize = prod(groupStructure)
+    A = Matrix{Int64}(undef, groupSize*5, length(groupElementTriples))
     
     ## for each group element, compute the winner and then the corresponding vector
-    for i=1:length(G)
-        g = G[i]
+    for i=1:length(groupElementTriples)
+        G = groupElementTriples[i]
         
         ## computing the winner
-        winner = getWinner(g, l, n)
+        winner = getLowerLambdaExp(G, lambda, groupStructure)
         
         ## getting the corresponding vector
-        A[:,i] = getVector(g, M[winner], n)
+        A[:,i] = getVector(G, basisExponents[winner], groupStructure)
     end
     
     return A
@@ -280,13 +302,20 @@ function better_sampling(n)
     return test_lam
 end
 
-function to_lambda(mu, eta, n)
+"""
+Given a mu-eta vector, returns a compatible lambda vector.
+"""
+function to_lambda(mu, eta, groupStructure) ## only works for cyclic groups currently! --maybe this same idea will work?
     lambda = Dict()
-    for i=0:(n-1)
-        lambda[(6,i)] = maximum([mu[i+1], 0]) ## set lambda_6^k = mu_k if mu_k > 0
-        lambda[(5,i)] = minimum([mu[i+1], 0])*(-1) ## set lambda_5^k = -mu_k if mu_k < 0
+    groupSize = prod(groupStructure)
+    groupElements = getGroupElements(groupStructure)
+    ## this block should work for any group now
+    for i=eachIndex(groupElements)
+        lambda[(6,groupElements[i])] = maximum([mu[i], 0]) ## set lambda_6^k = mu_k if mu_k > 0
+        lambda[(5,groupElements[i])] = minimum([mu[i], 0])*(-1) ## set lambda_5^k = -mu_k if mu_k < 0
     end
 
+    ## this will probably not work for every group...
     lambda[(4,0)] = 0 ## set lambda_4^0 = 0
     for i=1:(n-1)
         lambda[(4,i)] = sum(eta[1:i]) ## set lambda_4^k = sum of first k etas
