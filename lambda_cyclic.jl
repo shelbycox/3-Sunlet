@@ -50,7 +50,7 @@ function getVector(g, basisExponent, groupStructure)
     groupSize = prod(groupStructure)
     numFactors = length(groupStructure)
     vector = Array{Int64}(undef, groupSize*5, 1)
-    groupElements = getGroupElements(groupStructure)
+    groupElements = vec(getGroupElements(groupStructure))
     
     g1, g2, g3 = g
     
@@ -316,30 +316,18 @@ function to_lambda(mu, eta, groupStructure) ## only works for cyclic groups curr
         lambda[(5,groupElements[i])] = minimum([mu[i], 0])*(-1) ## set lambda_5^k = -mu_k if mu_k < 0, 0 otherwise
     end
 
-    ## this will probably not work for every group...
+    ## this will now work for every group (assuming coordinates are chosen correctly)
     numFactors = length(groupStructure)
-    lambda[(4,zeros(numFactors))] = 0 ## set lambda_4^0 = 0
-    if numFactors == 1
-        for i=2:groupSize
-            lambda[(4,groupElements[i])] = sum(eta[1:i-1]) ## set lambda_4^k = sum of first k etas
-        end
-    else
-        ## need to build a chain of etas... slightly non-trivial because we don't know what order the eta elements are in...
-        ## TODO: fill this in for any group!
-        ## this will work for Z2 x Z2
-        count = 1
-        j = 1
-        while j <= groupSize
-            lambda[(4, groupElements[j])] = lambda[(4, groupElements[j - count])] + eta[(4, j)]
-            count = count + 1
-            j = j + count
-        end
+    lambda[(4,groupElements[1])] = 0 ## set lambda_4^0 = 0
+    for i=2:groupSize
+        lambda[(4,groupElements[i])] = sum(eta[1:i-1]) ## set lambda_4^k = sum of first k etas
     end
-    
+
     return lambda
 end
 
-function getRank(mu_eta, n)
-    L = to_lambda(mu_eta[1:n], mu_eta[(n+1):end], n)
-    return LinearAlgebra.rank(getMatrix(L, n))
+function getRank(mu_eta, groupStructure)
+    groupSize = prod(groupStructure)
+    L = to_lambda(mu_eta[1:groupSize], mu_eta[(groupSize+1):end], groupStructure)
+    return LinearAlgebra.rank(getMatrix(L, groupStructure))
 end
