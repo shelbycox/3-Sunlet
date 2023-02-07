@@ -1,3 +1,11 @@
+struct FiniteCyclicGroup
+    structure::Vector{Int64}
+    # groupSize::Int64
+    # numFactors::Int64
+    # elements::Any
+    # validElementTriples::Any
+end
+
 """
 Given the structure of a finite abelian group, returns a list of all triples of group elements that sum to zero.
 """
@@ -32,12 +40,4 @@ Sums a list of group elements.
 """
 function groupAdd(group::FiniteCyclicGroup, elementsToAdd)
     return sum(elementsToAdd) .% group
-end
-
-struct FiniteCyclicGroup
-    structure::Vector{Int64}
-    # groupSize::Int64
-    # numFactors::Int64
-    # elements::Any
-    # validElementTriples::Any
 end
