@@ -1,4 +1,5 @@
 using LinearAlgebra, Combinatorics
+include("groups.jl")
 
 ## choice of basis for the 3-sunlet model
 ##                      m_1                          m_2
@@ -16,12 +17,12 @@ exponent is the exponent vector (as a list).
 lambda is a vector in R^?.
 groupStructure is a list of integers that encodes the structure of the (finite) abelian group.
 """
-function computeLambda(groupElementTriple, exponent, lambda, groupStructure)
+function computeLambda(groupElementTriple, exponent, lambda, group::FiniteCyclicGroup)
     varsToSum = [] ## better name for this!
     
     for i in collect(keys(exponent))
         lower_index = i
-        upper_index = sum(groupElementTriple[exponent[i]]) .% groupStructure ## this is group addition
+        upper_index = groupAdd(group, groupElementTriple[exponent[i]])
         push!(varsToSum, (lower_index, upper_index))
     end
     
@@ -31,9 +32,9 @@ end
 """
 stuff here
 """
-function getLowerLambdaExp(groupElementTriple, lambda, groupStructure)
-    s1 = computeLambda(groupElementTriple, basisExponents[1], lambda, groupStructure)
-    s2 = computeLambda(groupElementTriple, basisExponents[2], lambda, groupStructure)
+function getLowerLambdaExp(groupElementTriple, lambda, group::FiniteCyclicGroup)
+    s1 = computeLambda(groupElementTriple, basisExponents[1], lambda, group)
+    s2 = computeLambda(groupElementTriple, basisExponents[2], lambda, group)
     
     if s1 <= s2
         return 1
@@ -46,11 +47,11 @@ end
 stuff here!
 ## TODO: clean up this code and figure out what it's doing
 """
-function getVector(g, basisExponent, groupStructure)
-    groupSize = prod(groupStructure)
-    numFactors = length(groupStructure)
+function getVector(g, basisExponent, group)
+    groupSize = getGroupSize(group)
+    numFactors = getNumFactors(group)
     vector = Array{Int64}(undef, groupSize*5, 1)
-    groupElements = vec(getGroupElements(groupStructure))
+    groupElements = vec(getGroupElements(group))
     
     g1, g2, g3 = g
     
@@ -65,7 +66,7 @@ function getVector(g, basisExponent, groupStructure)
     for i=4:6
         entry = [0 for k=1:groupSize] ## initiale a4/5/6 exponent indicator vectors
         if i in keys(basisExponent)
-            e = (sum([g[j] for j in basisExponent[i]]) .% groupStructure)
+            e = groupAdd(group, [g[j] for j in basisExponent[i]])
             entry[findfirst(x -> x == e, groupElements)] = 1
         end
         vector[(i-2)*groupSize+1:(i-1)*groupSize,:] = entry
@@ -75,30 +76,12 @@ function getVector(g, basisExponent, groupStructure)
 end
 
 """
-Given the structure of a finite abelian group, returns a list of all elements (each element is encoded as a list).
-"""
-function getGroupElements(groupStructure)
-    groupElementForm = [0:j-1 for j in groupStructure]
-    return [collect(g) for g in collect(Iterators.product(groupElementForm...))]
-end
-
-"""
-Given the structure of a finite abelian group, returns a list of all triples of group elements that sum to zero.
-"""
-function getValidGroupTriples(groupStructure)
-    groupElements = getGroupElements(groupStructure)
-    groupElementTriples = [collect(G) for G in collect(Iterators.product(groupElements, groupElements, groupElements))]
-    sumZeroTriples = [G for G in groupElementTriples if sum(G) .% groupStructure == zeros(length(groupStructure))]
-    return sumZeroTriples
-end
-
-"""
 stuff here!
 """
-function getMatrix(lambda, groupStructure)
+function getMatrix(lambda, group::FiniteCyclicGroup)
     ## list of triples of group elements
-    groupElementTriples = getValidGroupTriples(groupStructure)
-    groupSize = prod(groupStructure)
+    groupElementTriples = getValidGroupTriples(group)
+    groupSize = getGroupSize(group)
     A = Matrix{Int64}(undef, groupSize*5, length(groupElementTriples))
     
     ## for each group element, compute the winner and then the corresponding vector
@@ -106,17 +89,17 @@ function getMatrix(lambda, groupStructure)
         G = groupElementTriples[i]
         
         ## computing the winner
-        winner = getLowerLambdaExp(G, lambda, groupStructure)
+        winner = getLowerLambdaExp(G, lambda, group)
         
         ## getting the corresponding vector
-        A[:,i] = getVector(G, basisExponents[winner], groupStructure)
+        A[:,i] = getVector(G, basisExponents[winner], group)
     end
     
     return A
 end
 
 """
-stuff here!
+not sure if I need this anymore
 """
 function genData(n, N)
     # for now just recording the rank
@@ -305,10 +288,10 @@ end
 """
 Given a mu-eta vector, returns a compatible lambda vector.
 """
-function to_lambda(mu, eta, groupStructure) ## only works for cyclic groups currently! --maybe this same idea will work?
+function to_lambda(mu, eta, group::FiniteCyclicGroup) ## only works for cyclic groups currently! --maybe this same idea will work?
     lambda = Dict()
-    groupSize = prod(groupStructure)
-    groupElements = getGroupElements(groupStructure)
+    groupSize = getGroupSize(group)
+    groupElements = getGroupElements(group)
     ## this block should work for any group now
     ## TODO: check that the mus are in the order you think they are wrt group element generation --> they are for Z2 x Z2!
     for i=eachindex(groupElements)
@@ -317,7 +300,7 @@ function to_lambda(mu, eta, groupStructure) ## only works for cyclic groups curr
     end
 
     ## this will now work for every group (assuming coordinates are chosen correctly)
-    numFactors = length(groupStructure)
+    numFactors = getNumFactors(group)
     lambda[(4,groupElements[1])] = 0 ## set lambda_4^0 = 0
     for i=2:groupSize
         lambda[(4,groupElements[i])] = sum(eta[1:i-1]) ## set lambda_4^k = sum of first k etas
@@ -326,8 +309,8 @@ function to_lambda(mu, eta, groupStructure) ## only works for cyclic groups curr
     return lambda
 end
 
-function getRank(mu_eta, groupStructure)
-    groupSize = prod(groupStructure)
-    L = to_lambda(mu_eta[1:groupSize], mu_eta[(groupSize+1):end], groupStructure)
-    return LinearAlgebra.rank(getMatrix(L, groupStructure))
+function getRank(mu_eta, group::FiniteCyclicGroup)
+    groupSize = getGroupSize(group)
+    L = to_lambda(mu_eta[1:groupSize], mu_eta[(groupSize+1):end], group)
+    return LinearAlgebra.rank(getMatrix(L, group))
 end
