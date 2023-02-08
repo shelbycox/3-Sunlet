@@ -6,11 +6,6 @@ include("groups.jl")
 basisExponents = [Dict([4=>[1,2], 5=>[1]]), Dict([4=>[2], 6=>[1]])]
 
 """
-I think I need either a group struct or a setup object.
-That way, I can store the group structure, number of factors, group elements, valid group triples, instead of needing to create them every time
-"""
-
-"""
 stuff here
 groupElementTriple is a list of three group elements.
 exponent is the exponent vector (as a list).
@@ -96,22 +91,6 @@ function getMatrix(lambda, group::FiniteCyclicGroup)
     end
     
     return A
-end
-
-"""
-not sure if I need this anymore
-"""
-function genData(n, N)
-    # for now just recording the rank
-    data = []
-    for i=1:N
-        l = rlam(n)
-        A = getMatrix(l, n)
-        r = LinearAlgebra.rank(A)
-        push!(data, r)
-    end
-    
-    return data
 end
 
 """

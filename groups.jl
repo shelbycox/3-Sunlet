@@ -10,9 +10,9 @@ end
 Given the structure of a finite abelian group, returns a list of all triples of group elements that sum to zero.
 """
 function getValidGroupTriples(group::FiniteCyclicGroup)
-    groupElements = getGroupElements(group.structure)
+    groupElements = getGroupElements(group)
     groupElementTriples = [collect(T) for T in collect(Iterators.product(groupElements, groupElements, groupElements))]
-    sumZeroTriples = [T for T in groupElementTriples if sum(T) .% group.structure == zeros(length(group.structure))]
+    sumZeroTriples = [T for T in groupElementTriples if groupAdd(group, T) == zeros(getNumFactors(group))]
     return sumZeroTriples
 end
 
@@ -39,5 +39,5 @@ end
 Sums a list of group elements.
 """
 function groupAdd(group::FiniteCyclicGroup, elementsToAdd)
-    return sum(elementsToAdd) .% group
+    return sum(elementsToAdd) .% group.structure
 end
