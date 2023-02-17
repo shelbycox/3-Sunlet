@@ -1,26 +1,20 @@
 using LinearAlgebra
 include("lambda_cyclic.jl")
 
-function formatTripleLatex(triple)
-    return '(' + triple[1][1] + ',' + triple[2][1] + ',' + triple[3][1] + ')'
-end
-
-function printTriple(i::Int64, nonTrivialTriples)
-    if h == 1
-        print("(0,*,*)")
+function formatTriple(triple, group::FiniteCyclicGroup)
+    if triple[1] == getGroupIdentity(group)
+        return "(0,*,*)"
     else
-        print(formatTripleLatex(nonTrivialTriples[h-1]))
+        return string('(', triple[1], ',', triple[2], ',', triple[3], ')')
     end
 end
 
-function printHIndex(i::Int64)
-    print(" & \$H_{", h, "}\$ & ")
+function formatHIndex(i::Int64)
+    return string(" & \$H_{", i, "}\$ & ")
 end
 
-function printH(H)
-    for j in eachindex(H)
-        print(H[j], " & ")
-    end
+function formatH(H)
+    return string([string(H[j], " & ") for j in eachindex(H)]...)
 end
 
 function printTableHeader(coords)
@@ -36,14 +30,14 @@ end
 """
 Given the coordinates and coefficients of a hyperplane, print the corresponding equation
 """
-function printEquation(coord, coeff)
-    print("\$")
+function formatEquation(coord, coeff)
+    to_return = "\$"
     
     for v in eachindex(coord)
-        print(formatVar(coord[v], coeff[v]))
+        to_return = string(to_return, formatVar(coord[v], coeff[v]))
     end
 
-    print(" = 0\$ \\\\")
+    return string(to_return, "= 0\$ \\\\")
 end
 
 function numToSign(n::Int64)
@@ -55,7 +49,7 @@ function numToSign(n::Int64)
 end
 
 function formatVar(var, coeff)
-    return " \\var " + numToSign(coeff)
+    return string(numToSign(coeff), " \\", var, " ")
 end
 
 function getHSupport(H)
@@ -65,32 +59,38 @@ end
 """
 Print a list of hyperplanes in LaTeX format for copy-and-paste.
 """
-function HToLatex(Hs, validTriples, coords)
-    nonTrivialTriples = [G for G in validTriples if G[1][1] != 0]
+function HToLatex(Hs, group::FiniteCyclicGroup)
+    nonTrivialTriples = [G for G in getValidGroupTriples(group) if G[1] != getGroupIdentity(group)]
+    coords = generateMuEtaCoordinates(group)
+    to_return = ""
     for h in eachindex(Hs)
         H = Hs[h]
         
         ## (g_1, g_2, g_3)
-        printTriple(h, nonTrivialTriples)
-        
+        to_return = string(to_return, formatTriple(nonTrivialTriples[h], group))
+
         ## & $H_{h}$ &
-        printHIndex(h)
+        to_return = string(to_return, formatHIndex(h))
         
         ## 1 & 0 & ... & 0 &
-        printH(H)
+        to_return = string(to_return, formatH(H))
         
         ## $\mu_{i} - \eta_{jk} - \eta_{lm} = 0$ \\ 
         H_support = getHSupport(H)
-        printEquation(coords[H_support], H[H_support])
-        
-        println()
+        to_return = string(to_return, formatEquation(coords[H_support], H[H_support]), "\n")
     end
+    
+    return to_return
 end
 
 function generateMuEtaCoordinates(n::Int64)
     mus = [formatMu(i) for i=0:(n-1)]
     etas = [formatEta(i, i-1, n) for i=1:n]
     return vcat(mus, etas)
+end
+
+function generateMuEtaCoordinates(group::FiniteCyclicGroup)
+    return generateMuEtaCoordinates(getGroupSize(group))
 end
 
 function formatMu(i::Int64)
