@@ -72,7 +72,7 @@ function getMatrix(l, n)
     A = Matrix{Int64}(undef, n*5, length(G))
     
     ## for each group element, compute the winner and then the corresponding vector
-    for i=1:length(G)
+    for i in eachindex(G)
         g = G[i]
         
         ## computing the winner

@@ -1,19 +1,25 @@
 struct FiniteCyclicGroup
     structure::Vector{Int64}
-    # groupSize::Int64
-    # numFactors::Int64
-    # elements::Any
-    # validElementTriples::Any
 end
 
-"""
-Given the structure of a finite abelian group, returns a list of all triples of group elements that sum to zero.
-"""
-function getValidGroupTriples(group::FiniteCyclicGroup)
-    groupElements = getGroupElements(group)
-    groupElementTriples = [collect(T) for T in collect(Iterators.product(groupElements, groupElements, groupElements))]
-    sumZeroTriples = [T for T in groupElementTriples if groupAdd(group, T) == zeros(getNumFactors(group))]
-    return sumZeroTriples
+function getGroupSize(group::FiniteCyclicGroup)
+    return prod(group.structure)
+end
+
+function getNumFactors(group::FiniteCyclicGroup)
+    return length(group.structure)
+end
+
+function getGroupIdentity(group)
+    return zeros(Int64, getNumFactors(group))
+end
+
+function groupAdd(group::FiniteCyclicGroup, elementsToAdd)
+    return sum(elementsToAdd) .% group.structure
+end
+
+function isSumZeroTriple(threeElements, group::FiniteCyclicGroup)
+    return groupAdd(group, threeElements) == getGroupIdentity(group)
 end
 
 """
@@ -25,19 +31,11 @@ function getGroupElements(group::FiniteCyclicGroup)
 end
 
 """
-Computes the size of a finite cyclic group.
+Given the structure of a finite abelian group, returns a list of all triples of group elements that sum to zero.
 """
-function getGroupSize(group::FiniteCyclicGroup)
-    return prod(group.structure)
-end
-
-function getNumFactors(group::FiniteCyclicGroup)
-    return length(group.structure)
-end
-
-"""
-Sums a list of group elements.
-"""
-function groupAdd(group::FiniteCyclicGroup, elementsToAdd)
-    return sum(elementsToAdd) .% group.structure
+function getValidGroupTriples(group::FiniteCyclicGroup)
+    groupElements = getGroupElements(group)
+    groupElementTriples = [collect(T) for T in collect(Iterators.product(groupElements, groupElements, groupElements))]
+    sumZeroTriples = [T for T in groupElementTriples if groupAdd(group, T) == zeros(getNumFactors(group))]
+    return sumZeroTriples
 end

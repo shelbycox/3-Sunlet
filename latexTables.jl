@@ -1,8 +1,6 @@
 using LinearAlgebra
 include("lambda_cyclic.jl")
 
-p(n) = [rand(Float64)-.5 for j=1:n] ## generate a random point
-
 function formatTripleLatex(triple)
     return '(' + triple[1][1] + ',' + triple[2][1] + ',' + triple[3][1] + ')'
 end
@@ -35,26 +33,33 @@ function printTableHeader(coords)
     print("equation \\\\")
 end
 
+"""
+Given the coordinates and coefficients of a hyperplane, print the corresponding equation
+"""
 function printEquation(coord, coeff)
     print("\$")
+    
     for v in eachindex(coord)
-        if v != length(coord)
-            if coeff[v+1] > 0
-                 print("\\", coord[v], " + ")
-            else
-                print("\\", coord[v], " - ")
-            end
-        else
-            print("\\", coord[v], " = 0\$ \\\\")
-        end
+        print(formatVar(coord[v], coeff[v]))
+    end
+
+    print(" = 0\$ \\\\")
+end
+
+function numToSign(n::Int64)
+    if n > 0
+        return '+'
+    else
+        return '-'
     end
 end
 
-function getCoordCoeff(H)
-    vars = [i for i in eachindex(H) if H[i] != 0]
-    coord = coords[vars]
-    coeff = H[vars]
-    return coord, coeff
+function formatVar(var, coeff)
+    return " \\var " + numToSign(coeff)
+end
+
+function getHSupport(H)
+    return [i for i in eachindex(H) if H[i] != 0]
 end
 
 """
@@ -75,9 +80,25 @@ function HToLatex(Hs, validTriples, coords)
         printH(H)
         
         ## $\mu_{i} - \eta_{jk} - \eta_{lm} = 0$ \\ 
-        coord, coeff = getCoordCoeff(H)
-        printEquation(coord, coeff)
+        H_support = getHSupport(H)
+        printEquation(coords[H_support], H[H_support])
         
         println()
     end
+end
+
+function generateMuEtaCoordinates(n::Int64)
+    mus = [formatMu(i) for i=0:(n-1)]
+    etas = [formatEta(i, i-1, n) for i=1:n]
+    return vcat(mus, etas)
+end
+
+function formatMu(i::Int64)
+    return string("mu_{", string(i), "}")
+end
+
+function formatEta(i::Int64, j::Int64, n::Int64)
+    minIndex = string(min(i % n, j % n))
+    maxIndex = string(max(i % n, j % n))
+    return string("eta_{", maxIndex, minIndex, "}")
 end
