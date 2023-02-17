@@ -22,3 +22,11 @@ H3_support = getHSupport(H3)
 
 @test formatH(H3) == "1 & 0 & 0 & -1 & 0 & 0 & "
 @test formatHIndex(10) == " & \$H_{10}\$ & "
+
+@test formatEquation(ME[H3_support], H3[H3_support]) == "\$+ \\mu_{0} - \\eta_{10} = 0\$ \\\\"
+
+Z4 = FiniteCyclicGroup([4])
+Z3Z2 = FiniteCyclicGroup([3,2])
+@test formatTriple([[1],[2],[3]], Z4) == "(1,2,3)"
+@test formatTriple([[0],[-1],[1]], Z4) == "(0,*,*)"
+@test formatTriple([[1,1], [0,1], [2,2]], Z3Z2) == "([1, 1],[0, 1],[2, 2])"
