@@ -18,13 +18,13 @@ function formatH(H)
 end
 
 function printTableHeader(coords)
-    print("\$ (g_1, g_2, g_3) \$ & \$ \\# \$ & ")
+    to_return = "\$ (g_1, g_2, g_3) \$ & \$ \\# \$ & "
 
     for c in coords
-        print("\$", c, "\$ & ")
+        to_return = string(to_return, "\$", c, "\$ & ")
     end
     
-    print("equation \\\\")
+    return string(to_return, "equation \\\\")
 end
 
 """
@@ -62,7 +62,9 @@ Print a list of hyperplanes in LaTeX format for copy-and-paste.
 function HToLatex(Hs, group::FiniteCyclicGroup)
     nonTrivialTriples = [G for G in getValidGroupTriples(group) if G[1] != getGroupIdentity(group)]
     coords = generateMuEtaCoordinates(group)
-    to_return = ""
+
+    to_return = printTableHeader(coords)
+    
     for h in eachindex(Hs)
         H = Hs[h]
         

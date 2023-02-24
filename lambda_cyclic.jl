@@ -80,7 +80,7 @@ function getMatrix(lambda, group::FiniteCyclicGroup)
     A = Matrix{Int64}(undef, groupSize*5, length(groupElementTriples))
     
     ## for each group element, compute the winner and then the corresponding vector
-    for i=eachIndex(groupElementTriples)
+    for i=eachIndex(groupElementTriples::Vector{Any})
         G = groupElementTriples[i]
         
         ## computing the winner
