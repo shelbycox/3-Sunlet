@@ -3,18 +3,21 @@ using LinearAlgebra
 
 function generateSunletArr(group::FiniteCyclicGroup)
     validTriples = getValidGroupTriples(group)
-    
     hyperplanes = []
     
     for T in validTriples
-        muVector = getMuVector(T, group)
-        etaVector = getEtaVector(T, group)
-
-        H = [muVector..., etaVector...]
-        
+        H = getHyperplane(T, group)
         push!(hyperplanes, H)
     end
+
     return collect(Set(hyperplanes))
+end
+
+function getHyperplane(T, group::FiniteCyclicGroup)
+    muVector = getMuVector(T, group)
+    etaVector = getEtaVector(T, group)
+
+    return [muVector..., etaVector...]
 end
 
 function getMuVector(T, group::FiniteCyclicGroup)
@@ -39,9 +42,9 @@ end
 
 function getEtaSign(i, j)
     if i >= j
-        return 1
-    else
         return -1
+    else
+        return 1
     end
 end
 
