@@ -95,24 +95,35 @@ end
 Given a mu-eta vector, returns a compatible lambda vector.
 """
 function to_lambda(mu, eta, group::FiniteCyclicGroup) ## only works for cyclic groups currently! --maybe this same idea will work?
-    lambda = Dict()
-    groupSize = getGroupSize(group)
     groupElements = getGroupElements(group)
-    ## this block should work for any group now
-    ## TODO: check that the mus are in the order you think they are wrt group element generation --> they are for Z2 x Z2!
+    
+    muLambda = muToLambda(mu, groupElements)
+    etaLambda = etaToLambda(eta, groupElements)
+    
+    return merge(muLambda, etaLambda)
+end
+
+function muToLambda(mu, groupElements)
+    to_return = Dict()
+
     for i=eachindex(groupElements)
-        lambda[(6,groupElements[i])] = maximum([mu[i], 0]) ## set lambda_6^k = mu_k if mu_k > 0, 0 otherwise
-        lambda[(5,groupElements[i])] = minimum([mu[i], 0])*(-1) ## set lambda_5^k = -mu_k if mu_k < 0, 0 otherwise
+        to_return[(6,groupElements[i])] = maximum([mu[i], 0]) ## set lambda_6^k = mu_k if mu_k > 0, 0 otherwise
+        to_return[(5,groupElements[i])] = minimum([mu[i], 0])*(-1) ## set lambda_5^k = -mu_k if mu_k < 0, 0 otherwise
     end
 
-    ## this will now work for every group (assuming coordinates are chosen correctly)
-    numFactors = getNumFactors(group)
-    lambda[(4,groupElements[1])] = 0 ## set lambda_4^0 = 0
-    for i=2:groupSize
-        lambda[(4,groupElements[i])] = sum(eta[1:i-1]) ## set lambda_4^k = sum of first k etas
+    return to_return
+end
+
+function etaToLambda(eta, groupElements)
+    to_return = Dict()
+
+    to_return[(4,groupElements[1])] = 0 ## set lambda_4^0 = 0
+    for i=eachindex(groupElements[2:end])
+        ## TODO: check for bugs here
+        to_return[(4,groupElements[i])] = sum(eta[1:i-1]) ## set lambda_4^k = sum of first k etas
     end
 
-    return lambda
+    return to_return
 end
 
 function getRank(mu_eta, group::FiniteCyclicGroup)
