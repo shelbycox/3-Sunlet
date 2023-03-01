@@ -13,21 +13,25 @@ lambda is a vector in R^?.
 groupStructure is a list of integers that encodes the structure of the (finite) abelian group.
 """
 function computeLambda(groupElementTriple, exponent, lambda, group::FiniteCyclicGroup)
-    varsToSum = [] ## better name for this!
+    varsToSum = collectVarsToSum(group, exponent, groupElementTriple)
+    return sum([lambda[I] for I in varsToSum])
+end
+
+function collectVarsToSum(group::FiniteCyclicGroup, exponent, groupElementTriple)
+    to_return = [] ## better name for this!
     
     for i in collect(keys(exponent))
-        lower_index = i
         upper_index = groupAdd(group, groupElementTriple[exponent[i]])
-        push!(varsToSum, (lower_index, upper_index))
+        push!(to_return, (i, upper_index))
     end
-    
-    return sum([lambda[I] for I in varsToSum])
+
+    return to_return
 end
 
 """
 stuff here
 """
-function getLowerLambdaExp(groupElementTriple, lambda, group::FiniteCyclicGroup)
+function getLambdaMinimizer(groupElementTriple, lambda, group::FiniteCyclicGroup)
     s1 = computeLambda(groupElementTriple, basisExponents[1], lambda, group)
     s2 = computeLambda(groupElementTriple, basisExponents[2], lambda, group)
     
@@ -74,20 +78,14 @@ end
 stuff here!
 """
 function getMatrix(lambda, group::FiniteCyclicGroup)
-    ## list of triples of group elements
     groupElementTriples = getValidGroupTriples(group)
     groupSize = getGroupSize(group)
     A = Matrix{Int64}(undef, groupSize*5, length(groupElementTriples))
     
-    ## for each group element, compute the winner and then the corresponding vector
     for i=eachIndex(groupElementTriples::Vector{Any})
         G = groupElementTriples[i]
-        
-        ## computing the winner
-        winner = getLowerLambdaExp(G, lambda, group)
-        
-        ## getting the corresponding vector
-        A[:,i] = getVector(G, basisExponents[winner], group)
+        minimizer = getLambdaMinimizer(G, lambda, group)
+        A[:,i] = getVector(G, basisExponents[minimizer], group)
     end
     
     return A
