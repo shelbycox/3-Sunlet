@@ -48,6 +48,7 @@ function getEtaSign(i, j)
     end
 end
 
+## FIXME: make this work for non-cyclic groups!
 function getEtaCoords(i::Int64, j::Int64, n::Int64)
     max_index = max(i,j)
     min_index = min(i,j)
