@@ -82,7 +82,7 @@ function getMatrix(lambda, group::FiniteCyclicGroup)
     groupSize = getGroupSize(group)
     A = Matrix{Int64}(undef, groupSize*5, length(groupElementTriples))
     
-    for i=eachIndex(groupElementTriples::Vector{Any})
+    for i=eachindex(groupElementTriples)
         G = groupElementTriples[i]
         minimizer = getLambdaMinimizer(G, lambda, group)
         A[:,i] = getVector(G, basisExponents[minimizer], group)
@@ -120,7 +120,7 @@ function etaToLambda(eta, groupElements)
     to_return[(4,groupElements[1])] = 0 ## set lambda_4^0 = 0
     for i=eachindex(groupElements[2:end])
         ## TODO: check for bugs here
-        to_return[(4,groupElements[i])] = sum(eta[1:i-1]) ## set lambda_4^k = sum of first k etas
+        to_return[(4,groupElements[i+1])] = sum(eta[1:i]) ## set lambda_4^k = sum of first k etas
     end
 
     return to_return

@@ -1,5 +1,0 @@
-using LinearAlgebra
-include("lambda_cyclic.jl")
-
-p(n) = [rand(Float64)-.5 for j=1:n] ## generate a random point
-

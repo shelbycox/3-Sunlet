@@ -19,3 +19,7 @@ H22 = generateSunletArr(Z2Z2)
 open("H22_table.txt", "w") do to_write
     write(to_write, HToLatex(H22, Z2Z2))
 end
+
+test_list = [1]
+push!(test_list, 2)
+push!(test_list, 3)

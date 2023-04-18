@@ -27,7 +27,7 @@ Given the structure of a finite abelian group, returns a list of all elements (e
 """
 function getGroupElements(group::FiniteCyclicGroup)
     groupElementForm = [0:j-1 for j in group.structure]
-    return [collect(g) for g in collect(Iterators.product(groupElementForm...))]
+    return vec([collect(g) for g in collect(Iterators.product(groupElementForm...))])
 end
 
 """

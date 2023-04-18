@@ -3,14 +3,17 @@ using LinearAlgebra
 
 function generateSunletArr(group::FiniteCyclicGroup)
     validTriples = getValidGroupTriples(group)
-    hyperplanes = []
+    zeroHyperplane = [Int(i==1) for i=1:2*getGroupSize(group)-1]
+    hyperplanes = [zeroHyperplane]
     
     for T in validTriples
-        H = getHyperplane(T, group)
-        push!(hyperplanes, H)
+        if T[1] != getGroupIdentity(group) 
+            H = getHyperplane(T, group)
+            push!(hyperplanes, H)
+        end
     end
 
-    return collect(Set(hyperplanes))
+    return hyperplanes
 end
 
 function getHyperplane(T, group::FiniteCyclicGroup)
@@ -64,9 +67,13 @@ end
 ##
 
 function getArrangementInequality(v, hyperplanes)
-    return [LinearAlgebra.dot(v, H) for H in hyperplanes]
+    return [LinearAlgebra.dot(v, H) > 0 for H in hyperplanes]
 end
 
 function areNeighbors(I, J)
     return sum(I .⊻ J) == 1
+end
+
+function areM0Neighbors(I, J)
+    return sum(I[2:end] .⊻ J[2:end]) == 1
 end
