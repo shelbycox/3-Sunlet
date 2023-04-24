@@ -22,12 +22,12 @@ end
 
 Z5 = FiniteCyclicGroup([5])
 H5 = generateSunletArr(Z5)
-open ("H5_table.txt", "w") do to_write
+open("H5_table.txt", "w") do to_write
     write(to_write, HToLatex(H5, Z5))
 end
 
 Z6 = FiniteCyclicGroup([6])
 H6 = generateSunletArr(Z6)
-open ("H6_table.txt", "w") do to_write
+open("H6_table.txt", "w") do to_write
     write(to_write, HToLatex(H6, Z6))
 end
