@@ -14,3 +14,7 @@ for g in eachindex(test_groups)
 end
 
 getGroupElements(Z2Z2)
+
+g1 = [2]
+h1 = getInverse(Z4, g1)
+@test groupAdd(Z4, [g1, h1]) == getGroupIdentity(Z4)

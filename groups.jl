@@ -39,3 +39,10 @@ function getValidGroupTriples(group::FiniteCyclicGroup)
     sumZeroTriples = [T for T in groupElementTriples if groupAdd(group, T) == zeros(getNumFactors(group))]
     return sumZeroTriples
 end
+
+"""
+Given a group element g, find its (additive) inverse in the group
+"""
+function getInverse(group::FiniteCyclicGroup, g)
+    return [(-g[i][1] + group.structure[i]) % group.structure[i] for i=eachindex(group.structure)]
+end
