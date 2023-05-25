@@ -1,4 +1,6 @@
 using Test
+using IterTools
+using CSV, Tables
 include("lambda_guess.jl")
 include("lambda_cyclic.jl")
 
@@ -88,17 +90,39 @@ for k in keys(L)
     println("\\lambda_", k[1], "^", k[2][1], " &= ", L[k], " \\\\")
 end
 
-Z7 = FiniteCyclicGroup([7])
-L = lambdaGuess(Z7)
-M = getMatrix(L, Z7)
-r = LinearAlgebra.rank(M)
-
-for i=1:10000
-    L = lambdaGuess(Z7)
-    newM = getMatrix(L, Z7)
+function getGuessMatrixCSV(group::FiniteCyclicGroup, file_path::String)
+    G = group
+    L = lambdaGuess(G)
+    M = getMatrix(L, G)
     r = LinearAlgebra.rank(M)
-    if M != newM
-        print("diff")
+    num_rows, num_cols = size(M)
+    CSV.write("$file_path$(G.structure)_matrix.csv", Tables.table(M), header=[string(g) for g in getValidGroupTriples(G)])
+end
+
+getGuessMatrixCSV(FiniteCyclicGroup([4]), "data/")
+
+G = FiniteCyclicGroup([5])
+L = lambdaGuess(G)
+M = getMatrix(L, G)
+r = LinearAlgebra.rank(M)
+num_rows, num_cols = size(M)
+target_rank = min(num_rows - 4, num_cols)
+CSV.write("Z5_matrix.csv", Tables.table(M), header=[string(g) for g in getValidGroupTriples(G)])
+
+cols = [M[:,i] for i=1:num_cols]
+S = collect(subsets(1:num_cols, r))
+max_rank_S = [s for s in collect(S) if LinearAlgebra.rank(M[:,s]) == r]
+
+
+ranks = Set()
+for i=1:10000
+    L = lambdaGuess(G)
+    newM = getMatrix(L, G)
+    r = LinearAlgebra.rank(M)
+    push!(ranks, r)
+    if r != 15
+        print(i)
         break
     end
 end
+ranks
