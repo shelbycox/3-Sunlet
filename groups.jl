@@ -46,3 +46,6 @@ Given a group element g, find its (additive) inverse in the group
 function getInverse(group::FiniteCyclicGroup, g)
     return [(-g[i][1] + group.structure[i]) % group.structure[i] for i=eachindex(group.structure)]
 end
+
+GROUP_STRUCTURES = [[3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17], [18], [2,2], [2,2,2], [2,2,2,2], [2,2,2,2,2], [4,2,2], [3,3], [3,3,3]]
+GROUPS = [FiniteCyclicGroup(s) for s in GROUP_STRUCTURES]
