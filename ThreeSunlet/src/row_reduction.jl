@@ -2,14 +2,6 @@ include("lambda_guess.jl")
 include("lambda_cyclic.jl")
 using CSV, Tables
 
-group = FiniteCyclicGroup([5])
-triples = getValidGroupTriples(group)
-id = getGroupIdentity(group)
-
-L = lambdaGuess(group)
-M = getMatrix(L, group)
-r = LinearAlgebra.rank(M)
-
 function my_row_reduction(M::Matrix, group::FiniteCyclicGroup)
     n = getGroupSize(group)
     for i=((n*2)+1):n*3
@@ -57,8 +49,4 @@ function row_reduced_csv(group::FiniteCyclicGroup, file_path::String)
     M, newColOrder = get_row_reduced_M(group)
     triples = getValidGroupTriples(group)[newColOrder]
     CSV.write("$file_path$(group.structure)_matrix_rr.csv", Tables.table(M), header=[string(T) for T in triples])
-end
-
-for group in GROUPS
-    row_reduced_csv(group, "data/row_reduced/")
 end

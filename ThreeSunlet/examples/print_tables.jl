@@ -1,6 +1,6 @@
-include("groups.jl")
-include("hyperplanes.jl")
-include("latexTables.jl")
+include("../src/groups.jl")
+include("../src/hyperplanes.jl")
+include("../src/latexTables.jl")
 
 Z3 = FiniteCyclicGroup([3])
 H3 = generateSunletArr(Z3)

@@ -1,4 +1,3 @@
-using Test
 include("sampling.jl")
 include("groups.jl")
 include("hyperplanes.jl")

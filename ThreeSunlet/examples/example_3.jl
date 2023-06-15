@@ -1,5 +1,5 @@
-include("weyl.jl")
-include("lambda_cyclic.jl")
+include("../src/weyl.jl")
+include("../src/lambda_cyclic.jl")
 
 n = 3
 
