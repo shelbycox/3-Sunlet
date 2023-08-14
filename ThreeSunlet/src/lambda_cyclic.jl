@@ -128,6 +128,6 @@ end
 
 function getRank(mu_eta, group::FiniteCyclicGroup)
     groupSize = getGroupSize(group)
-    L = to_lambda(mu_eta[1:groupSize], mu_eta[(groupSize+1):end], group)
+    L = to_lambda(mu_eta[1 : groupSize], mu_eta[(groupSize + 1):end], group)
     return LinearAlgebra.rank(getMatrix(L, group))
 end

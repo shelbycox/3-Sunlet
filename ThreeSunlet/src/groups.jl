@@ -48,7 +48,7 @@ function getInverse(group::FiniteCyclicGroup, g)
 end
 
 function string(group::FiniteCyclicGroup)
-    return Base.string(group.structure)
+    return Base.string('Z', join(group.structure, '-'))
 end
 
 function index_triples(group::FiniteCyclicGroup, g0, k)

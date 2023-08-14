@@ -62,10 +62,10 @@ function getEtaCoords(i::Int64, j::Int64, n::Int64)
     return to_return
 end
 
-##
-### This doesn't really need to go here.
-##
 
+"""
+Works for mu-eta coordinates.
+"""
 function getArrangementInequality(v, hyperplanes)
     return [LinearAlgebra.dot(v, H) > 0 for H in hyperplanes]
 end
@@ -76,4 +76,33 @@ end
 
 function areM0Neighbors(I, J)
     return sum(I[2:end] .⊻ J[2:end]) == 1
+end
+
+function containsNeighbor(I, Js)
+    for J in Js
+        if areNeighbors(I, J)
+            return true
+        end
+    end
+    return false
+end
+
+## TODO: test this
+function distToRegion(source, target, regions)
+    count = 0
+    curr = [source]
+    while target ∉ curr
+        count = count + 1
+        new = [R for R in regions if containsNeighbor(R, curr)]
+        curr = new
+    end
+    return count
+end
+
+function lambda_to_mueta(lambda, group::FiniteCyclicGroup)
+    groupSize = getGroupSize(group)
+    elements = getGroupElements(group)
+    eta = [lambda[(4, elements[i+1])] - lambda[(4, elements[i])] for i=1:groupSize-1]
+    mu = [lambda[(6, elements[i])] - lambda[(5, elements[i])] for i=1:groupSize]
+    return vcat(mu, eta)
 end
