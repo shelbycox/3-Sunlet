@@ -4,7 +4,6 @@ include("../src/lambda_cyclic.jl")
 
 Z4 = FiniteCyclicGroup([4])
 H4 = generateSunletArr(Z4)
-LinearAlgebra.dot(H4[1], mueta_guess)
 
 lambda_guess = lambdaGuess(Z4)
 M_guess = getMatrix(lambda_guess, Z4)
@@ -32,30 +31,32 @@ lambda_max = to_lambda(mueta_max[1:4], mueta_max[5:end], Z4)
 M_max = getMatrix(lambda_max, Z4)
 
 function matrix_to_latex(M, headers)
-    print("\\begin{bmatrix}\n\t")
+    to_return = "\\[\\begin{array}{*{16}c}\n\t"
     for h=eachindex(headers)
-        print("$(headers[h])")
+        to_return = Base.string(to_return, "\\begin{turn}{90} $(headers[h]) \\end{turn}")
         if h < length(headers)
-            print(" & ")
+            to_return = Base.string(to_return, " & ")
         else
-            print(" \\\\\n")
+            to_return = Base.string(to_return, " \\\\\n")
         end
     end
 
-    for i=eachindex(M)
-        print("\t")
-        for j=eachindex(M[1])
-            print(M[i][j])
-            if j < length(M[1])
-                print(" & ")
+    for i=1:20
+        to_return = Base.string(to_return, "\t")
+        for j=1:16
+            to_return = Base.string(to_return, M[i,j])
+            if j < 16
+                to_return = Base.string(to_return, " & ")
             end
         end
-        print("\\\\\n")
+        to_return = Base.string(to_return, " \\\\\n")
     end
-    print("\\end{bmatrix}")
+    to_return = Base.string(to_return, "\\end{array}\\]")
+    return to_return
 end
 
-matrix_to_latex(M_max, getValidGroupTriples(Z4))
+write("data/Z4_matrices/max.txt", matrix_to_latex(M_max, getValidGroupTriples(Z4)))
+write("data/Z4_matrices/guess.txt", matrix_to_latex(M_guess, getValidGroupTriples(Z4)))
 
 mu_eta = S4[R4[3]]
 lambda_ex = to_lambda(mu_eta[1 : 4], mu_eta[(4 + 1):end], Z4)
