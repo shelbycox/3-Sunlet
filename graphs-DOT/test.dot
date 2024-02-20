@@ -1,0 +1,5 @@
+graph G {
+	node [shape=point];
+	A -- {B C};
+
+} 
