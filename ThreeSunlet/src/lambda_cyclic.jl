@@ -45,22 +45,29 @@ end
 """
 stuff here!
 ## TODO: clean up this code and figure out what it's doing
+basis element is m1 or m2
+g is a triple of group elements
+group is the finite abelian group
 """
 function getVector(g, basisExponent, group)
     groupSize = getGroupSize(group)
     numFactors = getNumFactors(group)
-    vector = Array{Int64}(undef, groupSize*5, 1)
+    vector = Array{Int64}(undef, groupSize*6, 1)
     groupElements = vec(getGroupElements(group))
     
     g1, g2, g3 = g
+
+    a1Exponent = [0 for i=1:groupSize]
+    a1Exponent[findfirst(x -> x == g1, groupElements)] = 1
+    vector[1:groupSize,:] = a1Exponent
     
     a2Exponent = [0 for i=1:groupSize] ## initialize a2 exponent indicator vector
     a2Exponent[findfirst(x -> x == g2, groupElements)] = 1
-    vector[1:groupSize,:] = a2Exponent
+    vector[groupSize+1:2*groupSize,:] = a2Exponent
     
     a3Exponent = [0 for i=1:groupSize] ## initialize a3 exponent indicator vector
     a3Exponent[findfirst(x -> x == g3, groupElements)] = 1
-    vector[groupSize+1:2*groupSize,:] = a3Exponent
+    vector[2*groupSize+1:3*groupSize,:] = a3Exponent
     
     for i=4:6
         entry = [0 for k=1:groupSize] ## initiale a4/5/6 exponent indicator vectors
@@ -68,7 +75,7 @@ function getVector(g, basisExponent, group)
             e = groupAdd(group, [g[j] for j in basisExponent[i]])
             entry[findfirst(x -> x == e, groupElements)] = 1
         end
-        vector[(i-2)*groupSize+1:(i-1)*groupSize,:] = entry
+        vector[(i-1)*groupSize+1:i*groupSize,:] = entry
     end
     
     return collect(vector)
@@ -80,7 +87,7 @@ stuff here!
 function getMatrix(lambda, group::FiniteCyclicGroup)
     groupElementTriples = getValidGroupTriples(group)
     groupSize = getGroupSize(group)
-    A = Matrix{Int64}(undef, groupSize*5, length(groupElementTriples))
+    A = Matrix{Int64}(undef, groupSize*6, length(groupElementTriples))
     
     for i=eachindex(groupElementTriples)
         G = groupElementTriples[i]

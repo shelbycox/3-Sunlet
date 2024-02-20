@@ -30,6 +30,44 @@ I_max .⊻ I_guess
 lambda_max = to_lambda(mueta_max[1:4], mueta_max[5:end], Z4)
 M_max = getMatrix(lambda_max, Z4)
 
+low_peak = collect(keys(S4))[1]
+for s in keys(S4)
+    upper_found = false
+    r = getRank(S4[s], Z4)
+
+    if r == 16
+        upper_found = true
+    end
+
+    for t in keys(S4) 
+        if sum(s .⊻ t) == 1
+            if upper_found
+                break
+            end
+
+            if getRank(S4[t], Z4) > r
+                upper_found = true
+            end
+        end
+    end
+
+    if upper_found == false
+        print(s)
+        low_peak = s
+        break
+    end 
+end
+
+getRank(S4[low_peak], Z4)
+
+for s in keys(S4)
+    if sum(s .⊻ low_peak) == 1
+        print(getRank(S4[s], Z4))
+    end
+end
+
+H4
+
 function matrix_to_latex(M, headers)
     to_return = "\\[\\begin{array}{*{16}c}\n\t"
     for h=eachindex(headers)

@@ -38,7 +38,7 @@ function lambdaGuess(group::FiniteCyclicGroup)
     lambda[e] = -10
 
     ## for each g \in X, pick mu_g so that 
-    ##lambda_e - lambda_-g < mu_g < lambda_(g+h) - h 
+    ##lambda_e - lambda_-g < mu_g < lambda_(g+h) - h
     ##for all h in G
     ## mu_g should end up small and negative... I think
     for g in X
